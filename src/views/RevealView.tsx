@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { wildcardArtFor } from '../data'
-import { markRevealed, playRevealChime } from '../lib/store'
+import { markRevealed, ensureAudio, playRevealChime } from '../lib/store'
 
 interface Props {
   contestantId: string
@@ -54,8 +54,6 @@ export function RevealView({ contestantId, contestantName, wildcard, note, fellB
   const [progress, setProgress] = useState(0)
   const timer = useRef<number | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const audioRef = useRef<HTMLCanvasElement>(null)
-  void audioRef
   const art = wildcardArtFor(wildcard)
 
   useEffect(() => () => {
@@ -64,6 +62,7 @@ export function RevealView({ contestantId, contestantName, wildcard, note, fellB
 
   function startHold(e: React.MouseEvent | React.TouchEvent) {
     e.preventDefault()
+    ensureAudio() // unlock iOS audio inside the gesture
     if (stage !== 'sealed' || timer.current) return
     let p = 0
     timer.current = window.setInterval(() => {
@@ -97,7 +96,7 @@ export function RevealView({ contestantId, contestantName, wildcard, note, fellB
 
   if (stage === 'burst') {
     return (
-      <div className="min-h-dvh bg-[#0d0d1a] relative overflow-hidden flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-dvh bg-[#0d0d1a] relative overflow-hidden flex flex-col items-center justify-center p-6 pb-safe text-center">
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
         <motion.div
           initial={{ opacity: 1 }}
@@ -145,7 +144,7 @@ export function RevealView({ contestantId, contestantName, wildcard, note, fellB
 
   return (
     <div
-      className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-8 p-6 select-none"
+      className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-8 p-6 pb-safe select-none no-callout"
       onMouseUp={releaseHold}
       onTouchEnd={releaseHold}
       onMouseLeave={releaseHold}

@@ -12,7 +12,38 @@ body {
   background: #0d0d1a;
   color: #fff8e7;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
+}
+
+/* Kill tap highlight + double-tap-zoom delay on iOS */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+/* dvh fallback for older Safari (<15.4): 100vh applies, modern browsers
+   override with 100dvh so the URL bar show/hide doesn't jump layout */
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Notch / home-indicator padding (needs viewport-fit=cover) */
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Long-pressable controls (hold-to-open): no iOS callout, no selection */
+.no-callout {
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .font-display {

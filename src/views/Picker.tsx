@@ -9,7 +9,7 @@ export function Picker({ onPick }: { onPick: (p: Participant) => void }) {
   const [pending, setPending] = useState<Participant | null>(null)
 
   return (
-    <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-8 p-6">
+    <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-8 p-6 pb-safe pt-safe">
       <div className="text-center">
         <div className="text-4xl mb-3">📦</div>
         <h1 className="text-cream text-2xl font-display tracking-wide">Who are you?</h1>

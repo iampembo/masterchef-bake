@@ -30,7 +30,7 @@ export function LockedView({ me, boxes }: { me: Participant; boxes: Box[] }) {
       : boxes.find((b) => b.contestant_id === me.id)
 
   return (
-    <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-6 p-6 text-center">
+    <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-6 p-6 pb-safe pt-safe text-center">
       <motion.div
         animate={{ scale: [1, 1.04, 1] }}
         transition={{ repeat: Infinity, duration: 2.5 }}

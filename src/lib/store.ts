@@ -150,13 +150,31 @@ export function computePhase(params: {
 }
 
 // ---------------------------------------------------------------------------
-// Reveal chime — synthesised with Web Audio, no mp3 asset needed
+// Reveal chime — synthesised with Web Audio, no mp3 asset needed.
+// iOS Safari suspends AudioContexts created outside a user gesture, so the
+// context is created/resumed inside the hold gesture (ensureAudio) and the
+// notes play later on the already-unlocked context.
 // ---------------------------------------------------------------------------
+
+let sharedCtx: AudioContext | null = null
+
+export function ensureAudio(): void {
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!sharedCtx) sharedCtx = new Ctx()
+    if (sharedCtx.state === 'suspended') void sharedCtx.resume()
+  } catch {
+    /* audio unavailable — animation carries the moment */
+  }
+}
 
 export function playRevealChime(): void {
   try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    const ctx = new Ctx()
+    ensureAudio()
+    const ctx = sharedCtx
+    if (!ctx) return
     const notes = [523.25, 659.25, 783.99, 1046.5] // C5 E5 G5 C6
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator()
@@ -171,7 +189,6 @@ export function playRevealChime(): void {
       osc.start(t)
       osc.stop(t + 0.7)
     })
-    window.setTimeout(() => void ctx.close(), 1200)
   } catch {
     /* audio unavailable — animation carries the moment */
   }

@@ -37,7 +37,7 @@ export function ActiveView({ me, boxes, statuses, resolved, onStatus }: Props) {
   const myBox = boxes.find((b) => b.contestant_id === me.id)
 
   return (
-    <div className="min-h-dvh bg-[#0d0d1a] p-5 pb-12 max-w-lg mx-auto flex flex-col gap-6">
+    <div className="min-h-dvh bg-[#0d0d1a] p-5 pb-safe pt-safe max-w-lg mx-auto flex flex-col gap-6">
       <header className="text-center pt-3">
         <div className="text-3xl">🔥</div>
         <h1 className="text-cream text-xl font-display mt-1">Cook day is live</h1>

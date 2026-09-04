@@ -71,7 +71,7 @@ export function SetupView({ critic, contestant, existingBox, onSubmitted }: Prop
   // Already submitted (e.g. reopened app): show sealed confirmation, no edits.
   if (existingBox?.submitted_at) {
     return (
-      <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-4 p-6 pb-safe pt-safe text-center">
         <div className="text-5xl">🔒</div>
         <h2 className="text-cream text-xl font-display">Sealed for {contestant.name}</h2>
         <p className="text-white/50 text-sm max-w-xs">
@@ -86,7 +86,7 @@ export function SetupView({ critic, contestant, existingBox, onSubmitted }: Prop
   }
 
   return (
-    <div className="min-h-dvh bg-[#0d0d1a] p-5 pb-10 flex flex-col gap-5 max-w-lg mx-auto">
+    <div className="min-h-dvh bg-[#0d0d1a] p-5 pb-safe pt-safe flex flex-col gap-5 max-w-lg mx-auto">
       <div className="text-center pt-4">
         <div className="text-3xl">😈</div>
         <h2 className="text-cream text-xl font-display mt-2">
@@ -146,7 +146,7 @@ export function SetupView({ critic, contestant, existingBox, onSubmitted }: Prop
           onChange={(e) => setCustom(e.target.value)}
           maxLength={80}
           placeholder="e.g. yuzu kosho 😈"
-          className="mt-1 w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-gold/60"
+          className="mt-1 w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/25 text-base focus:outline-none focus:border-gold/60"
         />
       </div>
 
@@ -160,7 +160,7 @@ export function SetupView({ critic, contestant, existingBox, onSubmitted }: Prop
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Leave a message for them... 😈"
-            className="mt-1 w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/25 text-sm resize-none h-20 focus:outline-none focus:border-gold/60"
+            className="mt-1 w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/25 text-base resize-none h-20 focus:outline-none focus:border-gold/60"
           />
           <div className="text-right text-white/30 text-xs">{note.length}/{MAX_NOTE}</div>
         </motion.div>
