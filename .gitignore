@@ -4,3 +4,6 @@ dist/
 .DS_Store
 .vercel
 .env*
+
+# supabase local / temp
+supabase/.temp/
