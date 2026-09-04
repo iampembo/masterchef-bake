@@ -13,6 +13,7 @@ import {
   type ContestantStatus,
 } from './lib/store'
 import type { Participant } from './config'
+import { BrandButton, Header } from './components/Brand'
 import { Picker } from './views/Picker'
 import { SetupView } from './views/SetupView'
 import { LockedView } from './views/LockedView'
@@ -80,40 +81,49 @@ export default function App() {
     return m
   }, [boxes])
 
-  if (!me) return <Picker onPick={setMe} />
+  if (!me) {
+    return (
+      <>
+        <Header signedIn={false} />
+        <Picker onPick={setMe} />
+      </>
+    )
+  }
+
+  const shell = (body: React.ReactNode) => (
+    <>
+      <Header signedIn name={me.name} />
+      {body}
+    </>
+  )
 
   if (!supabaseConfigured) {
-    return (
-      <div className="min-h-dvh bg-[#0d0d1a] flex items-center justify-center p-6 text-center">
-        <div>
-          <div className="text-4xl mb-3">🔧</div>
-          <p className="text-cream">Hey {me.name} — backend not connected yet.</p>
-          <p className="text-white/40 text-sm mt-2 max-w-xs">
-            Add VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY to .env, then run supabase.sql in the
-            Supabase SQL editor.
+    return shell(
+      <div className="min-h-dvh flex items-center justify-center p-6 text-center">
+        <div className="brand-card p-6 max-w-xs">
+          <p className="font-bubble font-bold text-lg text-ink">Not connected yet.</p>
+          <p className="text-ink/60 text-sm mt-2">
+            Add the Supabase URL and anon key to .env, then run supabase.sql.
           </p>
         </div>
-      </div>
+      </div>,
     )
   }
 
   if (loadError && boxes.length === 0) {
-    return (
-      <div className="min-h-dvh bg-[#0d0d1a] flex items-center justify-center p-6 text-center">
-        <div>
-          <div className="text-4xl mb-3">📡</div>
-          <p className="text-cream">Couldn't reach the box…</p>
-          <p className="text-white/40 text-sm mt-2">{loadError}</p>
-          <button onClick={() => void fetchAll()} className="mt-4 px-6 py-3 rounded-xl bg-gold text-black font-bold">
-            Retry
-          </button>
+    return shell(
+      <div className="min-h-dvh flex items-center justify-center p-6 text-center">
+        <div className="brand-card p-6 max-w-xs flex flex-col gap-4">
+          <div>
+            <p className="font-bubble font-bold text-lg text-ink">No signal to the kitchen.</p>
+            <p className="text-ink/60 text-sm mt-1">{loadError}</p>
+          </div>
+          <BrandButton onClick={() => void fetchAll()}>Retry</BrandButton>
         </div>
-      </div>
+      </div>,
     )
   }
 
-  // Critic setup takes precedence: a critic who hasn't submitted sees SetupView
-  // even while boxes.length is still loading-ish, as long as we have data.
   const submitted = allSubmitted(boxes)
   const revealed = me.role === 'contestant' ? hasRevealed(me.id) : true
   const phase = submitted ? computePhase({ me, boxes, revealed }) : 'setup'
@@ -122,32 +132,35 @@ export default function App() {
     if (me.role === 'critic') {
       const target = getParticipant(me.picksFor ?? '') ?? CONTESTANTS[0]
       const existing = boxes.find((b) => b.contestant_id === target.id)
-      // If the OTHER critic hasn't created rows yet / still loading, still render.
-      return <SetupView critic={me} contestant={target} existingBox={existing} onSubmitted={() => void fetchAll()} />
+      return shell(
+        <SetupView critic={me} contestant={target} existingBox={existing} onSubmitted={() => void fetchAll()} />,
+      )
     }
-    return (
-      <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <div className="text-6xl">😈</div>
-        <h2 className="text-cream text-xl font-display">The critics are plotting…</h2>
-        <p className="text-white/50 text-sm max-w-xs">
-          Paige and Simran are picking your wildcard. Your box seals overnight and opens at 8am.
+    return shell(
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4 p-6 pb-safe text-center max-w-lg mx-auto">
+        <img src="/boxes/box-closed.png" alt="Sealed mystery box" className="w-40 object-contain" draggable={false} />
+        <h2 className="font-bubble font-extrabold text-2xl text-ink">The critics are deciding.</h2>
+        <p className="text-ink/60 text-sm max-w-xs">
+          Paige and Simran are choosing your wildcards. The boxes seal overnight and open at 8am.
         </p>
-        <button onClick={() => void fetchAll()} className="mt-2 text-white/30 text-xs underline">
-          refresh
+        <button onClick={() => void fetchAll()} className="mt-1 text-ink/35 text-xs underline underline-offset-2">
+          Check again
         </button>
-      </div>
+      </div>,
     )
   }
 
-  if (phase === 'locked') return <LockedView me={me} boxes={boxes} />
+  if (phase === 'locked') return shell(<LockedView me={me} boxes={boxes} />)
 
   if (phase === 'reveal' && me.role === 'contestant') {
     const r = resolved.get(me.id) ?? { wildcard: '', fellBack: false }
     const box = boxes.find((b) => b.contestant_id === me.id)
-    return (
+    const criticName = getParticipant(box?.submitted_by ?? '')?.name ?? 'Your critic'
+    return shell(
       <RevealView
         contestantId={me.id}
         contestantName={me.name}
+        criticName={criticName}
         wildcard={r.wildcard}
         note={box?.challenge_note ?? null}
         fellBack={r.fellBack}
@@ -155,11 +168,11 @@ export default function App() {
           markRevealed(me.id)
           setRevealedTick((x) => x + 1)
         }}
-      />
+      />,
     )
   }
 
-  return (
+  return shell(
     <ActiveView
       me={me}
       boxes={boxes}
@@ -175,6 +188,6 @@ export default function App() {
           return next
         })
       }
-    />
+    />,
   )
 }

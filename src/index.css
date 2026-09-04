@@ -1,18 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold: #ffd700;
-  --color-cream: #fff8e7;
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-hand: "Segoe Print", "Bradley Hand", cursive;
+  --color-paper: #fffdf7;
+  --color-cream: #f5e6d3;
+  --color-sand: #e8cba8;
+  --color-gold: #f2a900;
+  --color-cherry: #e63946;
+  --color-oxblood: #8b0d1e;
+  --color-ink: #1a1a22;
+  --font-bubble: "Baloo 2", ui-rounded, system-ui, sans-serif;
+  --font-brush: "Caveat", cursive;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
 body {
-  background: #0d0d1a;
-  color: #fff8e7;
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background-color: #fffdf7;
+  color: #1a1a22;
+  font-family: var(--font-body);
   overscroll-behavior: none;
+  /* whisper of halftone dots, straight from the brand sheet */
+  background-image: radial-gradient(#e8cba8 1px, transparent 1.4px);
+  background-size: 22px 22px;
 }
 
 /* Kill tap highlight + double-tap-zoom delay on iOS */
@@ -24,8 +33,7 @@ button {
   touch-action: manipulation;
 }
 
-/* dvh fallback for older Safari (<15.4): 100vh applies, modern browsers
-   override with 100dvh so the URL bar show/hide doesn't jump layout */
+/* dvh fallback for older Safari (<15.4) */
 .min-h-dvh {
   min-height: 100vh;
   min-height: 100dvh;
@@ -39,33 +47,75 @@ button {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
-/* Long-pressable controls (hold-to-open): no iOS callout, no selection */
+/* Tappable controls (box tap, tiles): no iOS callout, no selection */
 .no-callout {
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-.font-display {
-  font-family: var(--font-display);
+/* ---- Brand primitives (mirror the guide: 3px ink outline, hard offset shadow) ---- */
+
+.brand-card {
+  background: #fffdf7;
+  border: 3px solid #1a1a22;
+  border-radius: 1.25rem;
+  box-shadow: 5px 5px 0 #1a1a22;
 }
 
-.font-hand {
-  font-family: var(--font-hand);
+.brand-btn {
+  border: 3px solid #1a1a22;
+  border-radius: 1.1rem;
+  font-family: var(--font-bubble);
+  font-weight: 800;
+  box-shadow: 4px 4px 0 #1a1a22;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
-.text-gold {
-  color: var(--color-gold);
+.brand-btn:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #1a1a22;
 }
 
-.text-cream {
-  color: var(--color-cream);
+.brand-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
-.bg-gold {
-  background-color: var(--color-gold);
+.brand-btn-primary {
+  background: #e63946;
+  color: #fffdf7;
 }
 
-.border-gold {
-  border-color: var(--color-gold);
+.brand-btn-secondary {
+  background: #f5e6d3;
+  color: #1a1a22;
+}
+
+.brand-input {
+  background: #ffffff;
+  border: 2px solid #1a1a22;
+  border-radius: 0.9rem;
+  font-size: 1rem; /* 16px: stops iOS focus zoom */
+  color: #1a1a22;
+}
+
+.brand-input::placeholder {
+  color: rgba(26, 26, 34, 0.35);
+}
+
+.brand-input:focus {
+  outline: none;
+  border-color: #e63946;
+}
+
+/* Red burst rays behind hero moments (locked countdown, reveal pop) */
+.burst-rays {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(230, 57, 70, 0.16) 0deg 9deg,
+    transparent 9deg 20deg
+  );
+  -webkit-mask-image: radial-gradient(circle, black 30%, transparent 72%);
+  mask-image: radial-gradient(circle, black 30%, transparent 72%);
 }

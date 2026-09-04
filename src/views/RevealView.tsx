@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { wildcardArtFor } from '../data'
-import { markRevealed, ensureAudio, playRevealChime } from '../lib/store'
+import { ensureAudio, markRevealed, playRevealChime } from '../lib/store'
+import { BrandButton, Chip } from '../components/Brand'
 
 interface Props {
   contestantId: string
   contestantName: string
+  criticName: string
   wildcard: string
   note: string | null
   fellBack: boolean
   onComplete: () => void
 }
 
-type Stage = 'sealed' | 'burst'
+type Stage = 'ready' | 'shaking' | 'open'
 
 function burstParticles(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d')
@@ -20,7 +22,7 @@ function burstParticles(canvas: HTMLCanvasElement) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   canvas.width = canvas.clientWidth * dpr
   canvas.height = canvas.clientHeight * dpr
-  const colors = ['#FFD700', '#FFA500', '#FFFACD', '#FF8C00', '#FFFFFF']
+  const colors = ['#E63946', '#F2A900', '#8B0D1E', '#E8CBA8', '#1A1A22']
   const parts = Array.from({ length: 90 }, () => ({
     x: canvas.width / 2,
     y: canvas.height / 2,
@@ -49,130 +51,152 @@ function burstParticles(canvas: HTMLCanvasElement) {
   })()
 }
 
-export function RevealView({ contestantId, contestantName, wildcard, note, fellBack, onComplete }: Props) {
-  const [stage, setStage] = useState<Stage>('sealed')
-  const [progress, setProgress] = useState(0)
-  const timer = useRef<number | null>(null)
+export function RevealView({
+  contestantId,
+  contestantName,
+  criticName,
+  wildcard,
+  note,
+  fellBack,
+  onComplete,
+}: Props) {
+  const [stage, setStage] = useState<Stage>('ready')
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const art = wildcardArtFor(wildcard)
 
-  useEffect(() => () => {
-    if (timer.current) window.clearInterval(timer.current)
-  }, [])
+  useEffect(() => {
+    if (stage !== 'open') return
+    const t = window.setTimeout(onComplete, 12000)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage])
 
-  function startHold(e: React.MouseEvent | React.TouchEvent) {
-    e.preventDefault()
-    ensureAudio() // unlock iOS audio inside the gesture
-    if (stage !== 'sealed' || timer.current) return
-    let p = 0
-    timer.current = window.setInterval(() => {
-      p += 2.5 // ~1.2s to fill
-      setProgress(Math.min(p, 100))
-      if (p >= 100) {
-        if (timer.current) window.clearInterval(timer.current)
-        timer.current = null
-        triggerBurst()
-      }
-    }, 30)
-  }
-
-  function releaseHold() {
-    if (timer.current) {
-      window.clearInterval(timer.current)
-      timer.current = null
-    }
-    if (stage === 'sealed') setProgress(0)
-  }
-
-  function triggerBurst() {
-    setStage('burst')
-    playRevealChime()
-    markRevealed(contestantId)
-    requestAnimationFrame(() => {
-      if (canvasRef.current) burstParticles(canvasRef.current)
-    })
-    window.setTimeout(onComplete, 6000)
-  }
-
-  if (stage === 'burst') {
-    return (
-      <div className="min-h-dvh bg-[#0d0d1a] relative overflow-hidden flex flex-col items-center justify-center p-6 pb-safe text-center">
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-        <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 0.35 }}
-          className="absolute inset-0 bg-white pointer-events-none"
-        />
-        <motion.div
-          initial={{ scale: 0, rotateY: 180 }}
-          animate={{ scale: 1, rotateY: 0 }}
-          transition={{ delay: 0.35, type: 'spring', stiffness: 160, damping: 16 }}
-          className="relative bg-[#FFF8E7] rounded-3xl p-8 w-full max-w-xs shadow-[0_0_80px_rgba(255,215,0,0.45)]"
-        >
-          <div className="text-xs tracking-[0.3em] text-black/40 font-bold">WILDCARD</div>
-          {art && (
-            <img src={art} alt={wildcard} className="w-32 h-32 object-contain mx-auto my-4" draggable={false} />
-          )}
-          <h2 className="font-display text-3xl text-black leading-tight">{wildcard}</h2>
-          {fellBack && <div className="text-xs text-black/40 mt-2">🔀 fallback pick — the other box clashed</div>}
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.4 }}
-          className="relative mt-6 max-w-xs"
-        >
-          {note && (
-            <div className="bg-[#fffdf5] -rotate-2 rounded-lg px-5 py-4 shadow-lg">
-              <p className="font-hand text-lg text-black/80 leading-snug">“{note}”</p>
-            </div>
-          )}
-        </motion.div>
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.5 }}
-          onClick={onComplete}
-          className="relative mt-8 px-8 py-3 rounded-full bg-gold text-black font-bold"
-        >
-          Let's cook 🔥
-        </motion.button>
-      </div>
-    )
+  function tapBox() {
+    if (stage !== 'ready') return
+    ensureAudio()
+    setStage('shaking')
+    window.setTimeout(() => {
+      setStage('open')
+      playRevealChime()
+      markRevealed(contestantId)
+      requestAnimationFrame(() => {
+        if (canvasRef.current) burstParticles(canvasRef.current)
+      })
+    }, 950)
   }
 
   return (
-    <div
-      className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-8 p-6 pb-safe select-none no-callout"
-      onMouseUp={releaseHold}
-      onTouchEnd={releaseHold}
-      onMouseLeave={releaseHold}
-    >
-      <p className="text-cream/80 text-lg">
-        {contestantName}, your box is <span className="text-gold font-bold">ready</span>
-      </p>
-      <motion.div
-        animate={
-          progress > 0
-            ? { scale: [1, 1.05, 1], rotate: [-1.5, 1.5, -1.5], transition: { repeat: Infinity, duration: 0.16 } }
-            : { scale: [1, 1.03, 1], transition: { repeat: Infinity, duration: 2 } }
-        }
-        className="relative text-8xl"
-        style={{ filter: `drop-shadow(0 0 ${12 + progress * 0.6}px rgba(255,215,0,${0.25 + progress / 160}))` }}
-      >
-        📦
-      </motion.div>
-      <button
-        onMouseDown={startHold}
-        onTouchStart={startHold}
-        onContextMenu={(e) => e.preventDefault()}
-        className="relative w-52 h-14 rounded-full bg-white/10 border border-white/20 text-white font-semibold text-sm overflow-hidden touch-none"
-      >
-        <div className="absolute inset-0 bg-gold/40 origin-left" style={{ transform: `scaleX(${progress / 100})` }} />
-        <span className="relative z-10">{progress > 0 ? 'Keep holding…' : 'Hold to Open'}</span>
-      </button>
-      <p className="text-white/25 text-xs">sound on 🔊</p>
+    <div className="min-h-dvh flex flex-col items-center justify-center gap-5 p-6 pb-safe max-w-lg mx-auto w-full relative overflow-hidden">
+      {stage === 'open' && (
+        <>
+          <div className="burst-rays absolute inset-0 pointer-events-none" />
+          <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+          <motion.div
+            initial={{ opacity: 0.9 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="absolute inset-0 bg-paper pointer-events-none"
+          />
+        </>
+      )}
+
+      {stage !== 'open' ? (
+        <>
+          <h2 className="font-bubble font-extrabold text-2xl text-ink text-center">
+            {contestantName}, your box is ready.
+          </h2>
+          <div className="w-full max-w-[280px] aspect-[3/4] flex items-center justify-center">
+            <motion.button
+              type="button"
+              onTap={tapBox}
+              onClick={tapBox}
+              animate={
+                stage === 'ready'
+                  ? { y: [0, -8, 0] }
+                  : { rotate: [-5, 5, -4, 4, -2, 2, 0] }
+              }
+              transition={
+                stage === 'ready'
+                  ? { repeat: Infinity, duration: 2.2, ease: 'easeInOut' }
+                  : { duration: 0.9, ease: 'easeInOut' }
+              }
+              whileTap={{ scale: 0.96 }}
+              className="no-callout focus:outline-none"
+              style={{
+                filter:
+                  stage === 'shaking'
+                    ? 'drop-shadow(0 0 45px rgba(230,57,70,0.85))'
+                    : 'drop-shadow(0 0 26px rgba(242,169,0,0.6))',
+              }}
+              aria-label="Tap to open your mystery box"
+            >
+              <img
+                src="/boxes/box-closed.png"
+                alt="Your sealed mystery box"
+                draggable={false}
+                className="w-full object-contain pointer-events-none"
+              />
+            </motion.button>
+          </div>
+          <div>
+            <Chip tone="gold">Ready</Chip>
+          </div>
+          <p className="text-ink/60 text-sm">Tap to open.</p>
+          <p className="text-ink/30 text-xs">Sound on.</p>
+        </>
+      ) : (
+        <>
+          <div className="w-full max-w-[240px] aspect-[3/4] flex items-center justify-center relative">
+            <motion.img
+              src="/boxes/box-open.png"
+              alt="Your mystery box, open"
+              draggable={false}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 170, damping: 14 }}
+              className="w-full object-contain"
+            />
+          </div>
+          <motion.div
+            initial={{ scale: 0, rotateY: 120 }}
+            animate={{ scale: 1, rotateY: 0 }}
+            transition={{ delay: 0.45, type: 'spring', stiffness: 160, damping: 16 }}
+            className="brand-card relative p-6 w-full text-center"
+          >
+            <div className="text-[11px] tracking-[0.3em] font-bold text-ink/40">YOUR WILDCARD</div>
+            {art && (
+              <img src={art} alt={wildcard} className="w-28 h-28 object-contain mx-auto my-3" draggable={false} />
+            )}
+            <h2 className="font-bubble font-extrabold text-3xl text-ink leading-tight">{wildcard}</h2>
+            {fellBack && (
+              <div className="mt-2">
+                <Chip tone="gold">Second pick. First choices matched.</Chip>
+              </div>
+            )}
+          </motion.div>
+          {note && (
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4 }}
+              className="w-full bg-cream border-[3px] border-ink rounded-2xl px-5 py-4 -rotate-1 shadow-[4px_4px_0_#1A1A22]"
+            >
+              <div className="text-[11px] font-bold tracking-widest text-ink/50">
+                {criticName.toUpperCase()} WROTE
+              </div>
+              <p className="font-brush text-2xl text-ink leading-snug mt-1">{note}</p>
+            </motion.div>
+          )}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.2 }}
+            className="w-full"
+          >
+            <BrandButton onClick={onComplete}>Your time starts now</BrandButton>
+          </motion.div>
+        </>
+      )}
     </div>
   )
 }

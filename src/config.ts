@@ -19,8 +19,8 @@ export const CONTESTANTS: Participant[] = [
 ]
 
 export const CRITICS: Participant[] = [
-  { id: 'paige', name: 'Paige', role: 'critic', face: 'paige.png', picksFor: 'prash' },
-  { id: 'simran', name: 'Simran', role: 'critic', face: 'simran.png', picksFor: 'ethan' },
+  { id: 'paige', name: 'Paige', role: 'critic', face: 'paige.png', picksFor: 'ethan' },
+  { id: 'simran', name: 'Simran', role: 'critic', face: 'simran.png', picksFor: 'prash' },
 ]
 
 export const ALL_PARTICIPANTS: Participant[] = [...CONTESTANTS, ...CRITICS]

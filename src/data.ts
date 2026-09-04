@@ -59,15 +59,14 @@ export const PANTRY: string[] = [
 export interface StatusOption {
   id: string
   label: string
-  emoji: string
 }
 
 export const STATUS_OPTIONS: StatusOption[] = [
-  { id: 'researching', label: 'Researching', emoji: '🔍' },
-  { id: 'shopping', label: 'Shopping', emoji: '🛒' },
-  { id: 'cooking', label: 'Cooking', emoji: '🔥' },
-  { id: 'plating', label: 'Plating', emoji: '🍽️' },
-  { id: 'done', label: 'Done', emoji: '✅' },
+  { id: 'researching', label: 'Researching' },
+  { id: 'shopping', label: 'Shopping' },
+  { id: 'cooking', label: 'Cooking' },
+  { id: 'plating', label: 'Plating' },
+  { id: 'done', label: 'Done' },
 ]
 
 export const MAX_NOTE = 175

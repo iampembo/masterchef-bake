@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MAX_NOTE, WILDCARDS, wildcardById } from '../data'
 import { supabase, type Box } from '../lib/store'
-import { StickerImg } from '../components/StickerImg'
+import { BrandButton, Chip, TileButton } from '../components/Brand'
 import type { Participant } from '../config'
 
 interface Props {
@@ -12,25 +12,22 @@ interface Props {
   onSubmitted: () => void
 }
 
-/**
- * Critic setup: pick TOP TWO (tap order = rank) OR type a custom wildcard
- * (custom replaces both — typing clears the grid). Earliest submitter wins
- * any clash; the later box silently falls back to its choice2.
- */
 export function SetupView({ critic, contestant, existingBox, onSubmitted }: Props) {
   const [ranked, setRanked] = useState<string[]>([])
   const [custom, setCustom] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lastTapped, setLastTapped] = useState<string | null>(null)
 
   const customActive = custom.trim().length > 0
 
   function toggle(id: string) {
     if (customActive) return
+    setLastTapped(id)
     setRanked((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id) // deselect; #2 promotes
-      if (prev.length >= 2) return [prev[1], id] // third tap replaces #2, keeps #1
+      if (prev.includes(id)) return prev.filter((x) => x !== id)
+      if (prev.length >= 2) return [prev[1], id]
       return [...prev, id]
     })
   }
@@ -39,6 +36,10 @@ export function SetupView({ critic, contestant, existingBox, onSubmitted }: Prop
     () => customActive || ranked.length === 2,
     [customActive, ranked.length],
   )
+
+  const tappedTooltip = lastTapped
+    ? WILDCARDS.find((w) => w.id === lastTapped)?.tooltip
+    : null
 
   async function submit() {
     if (!valid || saving) return
@@ -63,118 +64,98 @@ export function SetupView({ critic, contestant, existingBox, onSubmitted }: Prop
       if (upErr) throw upErr
       onSubmitted()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not lock in — try again.')
+      setError(e instanceof Error ? e.message : 'Could not seal the box. Try again.')
       setSaving(false)
     }
   }
 
-  // Already submitted (e.g. reopened app): show sealed confirmation, no edits.
   if (existingBox?.submitted_at) {
     return (
-      <div className="min-h-dvh bg-[#0d0d1a] flex flex-col items-center justify-center gap-4 p-6 pb-safe pt-safe text-center">
-        <div className="text-5xl">🔒</div>
-        <h2 className="text-cream text-xl font-display">Sealed for {contestant.name}</h2>
-        <p className="text-white/50 text-sm max-w-xs">
-          Your pick is locked in. You won't see {contestant.name === 'Ethan' ? 'Prash' : 'Ethan'}
-          's box until the reveal. Sleep tight 😈
-        </p>
-        <div className="text-white/30 text-xs mt-2">
-          Your #{customActive ? 'custom' : 'ranked'} pick is hidden until 8am.
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4 p-6 pb-safe text-center max-w-lg mx-auto w-full">
+        <img src="/boxes/box-closed.png" alt="Sealed mystery box" className="w-44 object-contain" draggable={false} />
+        <div>
+          <Chip tone="ink">Sealed</Chip>
         </div>
+        <h2 className="font-bubble font-extrabold text-2xl text-ink">
+          {contestant.name}'s box is set
+        </h2>
+        <p className="text-ink/60 text-sm max-w-xs">
+          Your picks are locked in. The other box stays hidden until 8am.
+        </p>
+        <p className="font-brush text-2xl text-oxblood">See you at 8am.</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-dvh bg-[#0d0d1a] p-5 pb-safe pt-safe flex flex-col gap-5 max-w-lg mx-auto">
-      <div className="text-center pt-4">
-        <div className="text-3xl">😈</div>
-        <h2 className="text-cream text-xl font-display mt-2">
-          Pick <span className="text-gold">two</span> wildcards for{' '}
-          <span className="text-gold">{contestant.name}</span>
+    <div className="p-5 pb-safe flex flex-col gap-5 max-w-lg mx-auto w-full">
+      <div className="text-center pt-1">
+        <h2 className="font-bubble font-extrabold text-2xl text-ink">
+          {contestant.name}'s mystery box
         </h2>
-        <p className="text-white/40 text-xs mt-1">
-          Tap in order — 1st tap = 1st choice. If both critics pick the same #1, whoever locks in
-          first keeps it.
+        <p className="text-ink/60 text-sm mt-1">
+          Pick two wildcards, in order. If both critics pick the same first wildcard, the box
+          sealed first keeps it.
         </p>
       </div>
+
+      {tappedTooltip && !customActive && (
+        <div className="brand-card px-4 py-2.5 text-center">
+          <p className="text-sm text-ink/75">{tappedTooltip}</p>
+        </div>
+      )}
 
       <div className={`grid grid-cols-3 gap-3 ${customActive ? 'opacity-30 pointer-events-none' : ''}`}>
         {WILDCARDS.map((w, i) => {
           const rank = ranked.indexOf(w.id)
-          const selected = rank !== -1
           return (
-            <motion.button
+            <TileButton
               key={w.id}
-              onClick={() => toggle(w.id)}
-              whileTap={{ scale: 0.94 }}
+              img={`/ingredients/${w.imageKey}`}
+              alt={w.name}
+              label={w.name}
+              index={i}
+              selected={rank !== -1}
+              badge={rank !== -1 ? String(rank + 1) : null}
+              onTap={() => toggle(w.id)}
               title={w.tooltip}
-              className={`relative flex flex-col items-center gap-1 p-2 rounded-2xl border-2 transition-colors ${
-                selected ? 'border-gold bg-white/5' : 'border-transparent'
-              }`}
-            >
-              <StickerImg
-                src={`/ingredients/${w.imageKey}`}
-                alt={w.name}
-                size={72}
-                index={i}
-                wiggle={!selected}
-              />
-              <span className="text-[11px] text-center text-white/80 font-medium leading-tight">
-                {w.name}
-              </span>
-              {selected && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute top-0 right-0 bg-gold text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
-                >
-                  {rank + 1}
-                </motion.div>
-              )}
-            </motion.button>
+            />
           )
         })}
       </div>
 
       <div>
-        <label className="text-white/60 text-xs font-semibold">
-          …or invent your own wildcard <span className="text-white/30">(replaces grid picks)</span>
+        <label className="font-bubble font-bold text-ink">
+          Or write in your own <span className="font-body font-normal text-ink/50 text-sm">(replaces the grid picks)</span>
         </label>
         <input
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
           maxLength={80}
-          placeholder="e.g. yuzu kosho 😈"
-          className="mt-1 w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/25 text-base focus:outline-none focus:border-gold/60"
+          placeholder="Something from your imagination"
+          className="brand-input mt-1.5 w-full p-3"
         />
       </div>
 
       {valid && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <label className="text-white/60 text-xs font-semibold">
-            Challenge note for {contestant.name} <span className="text-white/30">(smack talk / hint)</span>
-          </label>
+          <label className="font-bubble font-bold text-ink">Add a note for {contestant.name}</label>
           <textarea
             maxLength={MAX_NOTE}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Leave a message for them... 😈"
-            className="mt-1 w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/25 text-base resize-none h-20 focus:outline-none focus:border-gold/60"
+            placeholder="Give them something to think about."
+            className="brand-input mt-1.5 w-full p-3 h-20 resize-none"
           />
-          <div className="text-right text-white/30 text-xs">{note.length}/{MAX_NOTE}</div>
+          <div className="text-right text-ink/40 text-xs">{note.length}/{MAX_NOTE}</div>
         </motion.div>
       )}
 
-      {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+      {error && <p className="text-cherry text-sm text-center font-semibold">{error}</p>}
 
-      <button
-        disabled={!valid || saving}
-        onClick={submit}
-        className="w-full py-4 rounded-2xl bg-gold text-black font-bold disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        {saving ? 'Sealing…' : '🔒 Lock It In'}
-      </button>
+      <BrandButton disabled={!valid || saving} onClick={submit}>
+        {saving ? 'Sealing…' : 'Seal the box'}
+      </BrandButton>
     </div>
   )
 }
