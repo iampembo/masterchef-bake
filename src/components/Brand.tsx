@@ -127,7 +127,7 @@ export function Header({ signedIn, name }: { signedIn: boolean; name?: string })
   return (
     <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b-[3px] border-ink">
       <div className="max-w-lg mx-auto px-4 pt-safe pb-2 flex items-center justify-center relative">
-        <img src="/logo-wordmark.png" alt="The Great Bakeoff" className="h-12 object-contain" draggable={false} />
+        <img src="/logo-wordmark.png" alt="The Great Bakeoff" className="h-20 object-contain" draggable={false} />
         {signedIn && (
           <button
             onClick={() => {
