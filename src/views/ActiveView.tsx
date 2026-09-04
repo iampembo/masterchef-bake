@@ -73,7 +73,6 @@ function Stepper({
 export function ActiveView({ me, boxes, statuses, resolved, onStatus }: Props) {
   const [saving, setSaving] = useState(false)
   const isContestant = me.role === 'contestant'
-  const myStatus = statuses.find((s) => s.contestant_id === me.id)?.status ?? null
 
   async function setMyStatus(status: string) {
     if (!isContestant || saving) return
@@ -128,9 +127,11 @@ export function ActiveView({ me, boxes, statuses, resolved, onStatus }: Props) {
           })}
         </div>
         {isContestant && (
-          <p className="text-ink/45 text-xs mt-3">
-            {myStatus ? 'Tap a step to move yourself along.' : 'Tap step 1 when you start.'}
-          </p>
+          <div className="mt-4 rounded-2xl border-[3px] border-ink bg-gold px-4 py-2.5 shadow-[3px_3px_0_#1A1A22]">
+            <p className="text-ink text-sm font-semibold text-center">
+              This board is live. Tap a step under your name to show where you're at.
+            </p>
+          </div>
         )}
       </section>
 
@@ -173,8 +174,9 @@ export function ActiveView({ me, boxes, statuses, resolved, onStatus }: Props) {
                 <li key={p}>· {p}</li>
               ))}
             </ul>
-            <p className="text-ink/45 text-xs mt-2">
-              Same pantry, both cooks. Make the wildcard the hero.
+            <p className="text-ink/60 text-sm mt-2">
+              The pantry is a guide, not a rule. Cook with whatever you need. The wildcard
+              is the only requirement.
             </p>
           </div>
         )}
