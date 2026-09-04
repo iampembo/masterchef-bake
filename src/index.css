@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #ffd700;
+  --color-cream: #fff8e7;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-hand: "Segoe Print", "Bradley Hand", cursive;
+}
+
+html,
+body {
+  background: #0d0d1a;
+  color: #fff8e7;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  overscroll-behavior-y: none;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-hand {
+  font-family: var(--font-hand);
+}
+
+.text-gold {
+  color: var(--color-gold);
+}
+
+.text-cream {
+  color: var(--color-cream);
+}
+
+.bg-gold {
+  background-color: var(--color-gold);
+}
+
+.border-gold {
+  border-color: var(--color-gold);
+}
